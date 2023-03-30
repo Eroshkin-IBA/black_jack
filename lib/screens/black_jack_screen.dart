@@ -99,25 +99,45 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                 children: [
                   Column(
                     children: [
-                      Text("Dealer's score $dealerScore"),
+                      dealerScore <= 21
+                          ? Text(
+                              "Dealer's score $dealerScore",
+                              style: const TextStyle(color: Colors.green),
+                            )
+                          : Text(
+                              "$dealerScore перебор",
+                              style: const TextStyle(color: Colors.red),
+                            ),
                       const SizedBox(height: 20),
                       Container(
                         height: 200,
                         child: GridView.builder(
-                          itemCount: dealerCards.length,
+                            itemCount: dealerCards.length,
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 3),
-                            physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
-                              return dealerCards[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: dealerCards[index],
+                              );
                             }),
                       )
                     ],
                   ),
                   Column(
                     children: [
-                      Text("player's score $playerScore"),
+                      playerScore <= 21
+                          ? Text(
+                              "player's score $playerScore",
+                              style: const TextStyle(color: Colors.green),
+                            )
+                          : Text(
+                              "$playerScore перебор",
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                      //Text("player's score $playerScore"),
                       const SizedBox(height: 20),
                       Container(
                         height: 200,
@@ -126,9 +146,12 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 3),
-                            physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
-                              return myCards[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: myCards[index],
+                              );
                             }),
                       )
                     ],
@@ -140,13 +163,15 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                       children: [
                         MaterialButton(
                           onPressed: () {
-                            addCard();
+                            if (playerScore < 21) {
+                              addCard();
+                            }
                           },
                           color: Colors.brown[200],
                           child: const Text("Another card"),
                         ),
                         MaterialButton(
-                          onPressed: () {},
+                          onPressed: () => changeCards(),
                           color: Colors.brown[200],
                           child: const Text("Next round"),
                         )
@@ -173,6 +198,9 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
       isGameStarted = true;
     });
 
+    playingCards = {};
+    playingCards.addAll(deckOfCards);
+
     myCards = [];
     dealerCards = [];
 
@@ -182,13 +210,16 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
         playingCards.keys.elementAt(random.nextInt(playingCards.length));
     playingCards.removeWhere((key, value) => cardOneKey == key);
 
-    String cardTwoKey = playingCards.keys.elementAt(random.nextInt(playingCards.length));
+    String cardTwoKey =
+        playingCards.keys.elementAt(random.nextInt(playingCards.length));
     playingCards.removeWhere((key, value) => cardTwoKey == key);
 
-    String cardThreeKey = playingCards.keys.elementAt(random.nextInt(playingCards.length));
+    String cardThreeKey =
+        playingCards.keys.elementAt(random.nextInt(playingCards.length));
     playingCards.removeWhere((key, value) => cardThreeKey == key);
 
-    String cardFourKey = playingCards.keys.elementAt(random.nextInt(playingCards.length));
+    String cardFourKey =
+        playingCards.keys.elementAt(random.nextInt(playingCards.length));
     playingCards.removeWhere((key, value) => cardFourKey == key);
 
     dealerFirstCard = cardOneKey;
@@ -201,7 +232,13 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
 
     dealerScore =
         deckOfCards[dealerFirstCard]! + deckOfCards[dealerSecondCard]!;
-
+    while (dealerScore < 15) {
+      String dealerNextCard =
+          playingCards.keys.elementAt(random.nextInt(playingCards.length));
+      playingCards.removeWhere((key, value) => key == dealerNextCard);
+      dealerCards.add(Image.asset(dealerNextCard));
+      dealerScore += deckOfCards[dealerNextCard]!;
+    }
     myCards.add(Image.asset(playerFirstCard!));
     myCards.add(Image.asset(playerSecondCard!));
 
@@ -209,5 +246,17 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
         deckOfCards[playerFirstCard]! + deckOfCards[playerSecondCard]!;
   }
 
-  void addCard() {}
+  void addCard() {
+    if (playingCards.isNotEmpty) {
+      Random random = Random();
+      String cardKey =
+          playingCards.keys.elementAt(random.nextInt(playingCards.length));
+      playingCards.removeWhere((key, value) => cardKey == key);
+
+      setState(() {
+        myCards.add(Image.asset(cardKey));
+        playerScore = playerScore + deckOfCards[cardKey]!;
+      });
+    }
+  }
 }
